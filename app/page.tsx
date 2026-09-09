@@ -47,7 +47,8 @@ export default function Home() {
           href="/api/health"
         >
           /api/health
-        </Link>
+        </Link>{" "}
+        · <span data-testid="deploy-marker">phase0-deploy-marker</span>
       </p>
     </main>
   );
