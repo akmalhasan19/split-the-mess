@@ -1,0 +1,147 @@
+# Implementation Plan — Split The Mess V2
+
+> Sumber ide: `split_the_mess.md`
+> Stack: **Next.js + Supabase** | WA: **Hybrid bertahap (Baileys MVP → Cloud API)** | OCR: **Manual dulu, OCR belakangan**
+> Cara pakai: centang `- [ ]` → `- [x]` setiap selesai. Selesaikan berurutan: `0 → 1 → 2 → 3 → 4 → 6 → 5 → 7`.
+
+---
+
+## Legend Status
+
+- `- [ ]` = belum mulai
+- `- [x]` = selesai
+- Prioritas MVP: Fase 0, 1, 2, 3, 4, 6 dulu. Fase 5 (OCR) dan 7 (Hardening/Migrasi) belakangan.
+
+---
+
+- [x] **Fase 0: Scaffolding & Foundasi** — SELESAI 2026-09-09 (`verify-phase0` 38/38; `npm run build` sukses; `tsc` bersih; Supabase LIVE: auth 200 + bucket `receipts` + roundtrip OK).
+  - [x] **Task 0.1: Init repo & Next.js App**
+    - [x] Init Next.js (App Router) + TypeScript di root repo
+    - [x] Install & konfigurasi Tailwind CSS + shadcn/ui
+    - [x] Setup ESLint + Prettier + `npm run dev` jalan tanpa error
+    - [x] Buat struktur folder: `/app/s/[token]`, `/lib/split-engine`, `/lib/whatsapp`, `/lib/supabase`
+  - [x] **Task 0.2: Setup Supabase project** — LIVE terverifikasi 2026-09-09 (auth health 200; bucket `receipts` public dibuat; roundtrip upload/download/delete OK).
+    - [x] Buat project Supabase baru
+    - [x] Simpan `NEXT_PUBLIC_SUPABASE_URL` & `ANON_KEY` & `SERVICE_ROLE_KEY` ke `.env.local`
+    - [x] Buat Storage bucket `receipts` (public read untuk MVP, private bila perlu) — via `GET /api/storage-check` (auto-create + roundtrip test)
+    - [x] Verifikasi koneksi read/write dari Next.js ke Supabase — via `GET /api/supabase-check` & `/api/storage-check`
+  - [ ] **Task 0.3: Setup deploy & CI dasar** — repo READY; tinggal push + import ke Vercel oleh user (langkah di bawah).
+    - [ ] Deploy awal ke Vercel (preview) berhasil
+    - [ ] Cek layout di in-app browser WhatsApp (mobile, tidak pecah)
+    - [x] Buat file SQL migration awal (kosong / placeholder)
+
+- [ ] **Fase 1: Core Split Engine + Session Manual**
+  - [ ] **Task 1.1: Implementasi `split-engine.ts`**
+    - [ ] Implementasi `calcProportional(items, selections, tax, service, discount)`
+    - [ ] Implementasi `smartRounding` (largest remainder agar sum == total struk)
+    - [ ] Handle edge: item tanpa pemilih, 1 item dimakan berdua, diskon > pajak
+    - [ ] Buat unit test dengan Vitest (target 15+ kasus)
+  - [ ] **Task 1.2: Skema DB inti (Supabase Postgres)**
+    - [ ] Buat tabel `sessions (id, token unique, receipt_image_url, subtotal, tax, service_charge, discount, payer_bca, payer_qris_url, status, raw_ocr_json)`
+    - [ ] Buat tabel `items (id, session_id, name, price, qty)`
+    - [ ] Buat tabel `participants (id, session_id, display_name)`
+    - [ ] Buat tabel `selections (item_id, participant_id)` many-to-many
+    - [ ] Buat tabel `settlements (session_id, participant_id, amount_subtotal, amount_tax, amount_service, amount_discount, amount_final, is_paid)`
+  - [ ] **Task 1.3: API session manual**
+    - [ ] `POST /api/sessions` — buat sesi + generate token (nanoid 8 char)
+    - [ ] `POST /api/sessions/[id]/finalize` — kalkulasi final + simpan settlements
+    - [ ] `GET /api/sessions/[token]` — ambil detail sesi untuk UI
+  - [ ] **Task 1.4: UI Admin minimal (validasi matematika)**
+    - [ ] Form buat sesi + tambah item manual (nama + harga)
+    - [ ] Form pajak / service / diskon + info pembayaran (BCA/QRIS)
+    - [ ] Tabel centang siapa makan apa + tombol Hitung
+    - [ ] Verifikasi contoh proposal (Pizza 85k, dst total 350k) hasilnya pas 100%
+
+- [ ] **Fase 2: Web App Aesthetic Mobile-First (Peserta View)**
+  - [ ] **Task 2.1: Halaman peserta `/s/[token]`**
+    - [ ] Card daftar menu (nama, harga, avatar pemilih live)
+    - [ ] Input nama sekali (simpan di localStorage)
+    - [ ] Tap untuk claim / unclaim item (optimistic UI)
+    - [ ] State loading skeleton + empty state + error state
+  - [ ] **Task 2.2: Halaman admin `/s/[token]/admin`**
+    - [ ] Edit pajak / service / diskon
+    - [ ] Edit info pembayaran (BCA, QRIS URL/image)
+    - [ ] Tombol `Selesai & Hitung` + konfirmasi
+  - [ ] **Task 2.3: Halaman hasil `/s/[token]/result`**
+    - [ ] Tampilkan rincian per orang + total presisi struk
+    - [ ] Tombol copy nomor rekening + buka link QRIS
+    - [ ] Optimasi mobile: button min 44px, font besar, ringan untuk in-app browser WA
+  - [ ] **Task 2.4: Validasi tanpa login**
+    - [ ] 5 user buka link sama tanpa login tanpa error RLS
+    - [ ] Token tidak mudah ditebak + expiry 7 hari (logika awal)
+
+- [ ] **Fase 3: Realtime Sync (Supabase Realtime)**
+  - [ ] **Task 3.1: Aktifkan Realtime**
+    - [ ] Enable Realtime untuk `selections` & `participants`
+    - [ ] Subscribe channel `session:{token}` di client
+    - [ ] Upsert `selections` dengan `onConflict(item_id, participant_id)`
+  - [ ] **Task 3.2: UX realtime**
+    - [ ] Optimistic update + rollback saat gagal
+    - [ ] Presence siapa online (Supabase presence)
+    - [ ] Debounce / throttle update agar tidak spam
+  - [ ] **Task 3.3: RLS & keamanan link**
+    - [ ] Buat RLS policy anon read/write berbasis token sesi
+    - [ ] Validasi token di Edge Function / API route bila perlu
+    - [ ] Test: HP A centang → HP B muncul <1 detik tanpa refresh
+
+- [ ] **Fase 4: WhatsApp Bot MVP (Baileys)**
+  - [ ] **Task 4.1: Setup service `bot/`**
+    - [ ] Init service Node + Baileys terpisah dari Next.js (untuk VPS/Railway/Fly.io)
+    - [ ] QR auth + session persistent + auto-reconnect
+    - [ ] Upload gambar struk ke Supabase Storage `receipts`
+  - [ ] **Task 4.2: Abstraksi `WhatsappAdapter`**
+    - [ ] Buat interface `sendText(), sendSummary(), parseCommand()`
+    - [ ] Implementasi `BaileysAdapter` (sekarang)
+    - [ ] Siapkan stub `CloudApiAdapter` (untuk Fase 7)
+  - [ ] **Task 4.3: Command grup**
+    - [ ] Deteksi `/split` + gambar di `messages.upsert`
+    - [ ] Balas template: Struk diterima + Total + link `https://.../s/[token]`
+    - [ ] Command `/link`, `/hasil`, `/help`
+    - [ ] Kirim ringkasan final + BCA/QRIS ke grup saat sesi finalized (webhook)
+  - [ ] **Task 4.4: Validasi end-to-end MVP**
+    - [ ] Kirim foto + `/split` di grup → bot balas link
+    - [ ] Selesaikan pilih di web → bot kirim ringkasan ke grup
+
+- [ ] **Fase 5: OCR & Smart Parsing (Setelah MVP Stabil)**
+  - [ ] **Task 5.1: API OCR**
+    - [ ] Buat `POST /api/ocr` terima `receipt_image_url`
+    - [ ] Integrasi provider trial (Google Vision / Veryfi / Textract)
+    - [ ] Normalisasi output ke `{items[], tax, service, discount, total}` + simpan `raw_ocr_json`
+  - [ ] **Task 5.2: Human-in-the-loop UI**
+    - [ ] Tampilkan `Hasil Scan - koreksi jika salah` di admin
+    - [ ] Fallback ke input manual jika confidence rendah
+    - [ ] Test 10 struk warteg/cafe Indonesia, target akurasi >85% setelah koreksi 1 menit
+
+- [ ] **Fase 6: Settlement, Status Bayar & Reminder Halus**
+  - [ ] **Task 6.1: Status pembayaran**
+    - [ ] Tombol `Saya Sudah Bayar` di result page → update `settlements.is_paid`
+    - [ ] Realtime status lunas/belum di admin view
+    - [ ] Tampilkan QRIS image + tombol copy BCA
+  - [ ] **Task 6.2: Reminder bot**
+    - [ ] Command `/tagih` mention hanya yang belum bayar (bahasa halus)
+    - [ ] Cron max 1 reminder/hari, anti-spam
+    - [ ] Opsi reminder private chat bila nomor tersedia
+
+- [ ] **Fase 7: Hardening, Testing & Migrasi WA Resmi**
+  - [ ] **Task 7.1: Testing**
+    - [ ] E2E Playwright: buat sesi → pilih → finalize → ringkasan
+    - [ ] Load test realtime 20 user bersamaan
+    - [ ] Unit test split-engine tetap hijau
+  - [ ] **Task 7.2: Security & housekeeping**
+    - [ ] Rate-limit bot + API
+    - [ ] Validasi token nanoid + expiry sesi 7 hari
+    - [ ] Hapus / blokir upload sensitif nyasar (mis. KTP)
+    - [ ] Backup Supabase + env production
+  - [ ] **Task 7.3: Migrasi WA resmi**
+    - [ ] Implementasi `CloudApiAdapter` (Meta WhatsApp Business)
+    - [ ] Feature-flag `WA_PROVIDER=baileys|cloud`
+    - [ ] Deploy final: Web di Vercel, Bot di Fly.io/Railway + supervisor QR re-auth
+    - [ ] Rekam demo 60 detik: grup WA → web live 2 HP → ringkasan balik ke WA
+
+---
+
+## Catatan Progress
+
+- Mulai dari: Fase 0
+- Urutan saran: `0 → 1 → 2 → 3 → 4 → 6 → 5 → 7`
+- Update file ini setiap selesai task: `- [ ]` → `- [x]`
