@@ -19,7 +19,7 @@ import {
   mapApiError,
   type SelectionRow,
 } from "@/lib/api/sessions";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export async function GET(
   _request: Request,
@@ -131,7 +131,9 @@ export async function PATCH(
       );
     }
 
-    const supabase = await createClient();
+    // Tulis via service role sesuai konvensi skema (policy anon pada tabel
+    // sessions hanya read; API route memvalidasi draft + whitelist field).
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("sessions")
       .update(updates)

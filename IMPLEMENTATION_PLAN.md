@@ -53,23 +53,23 @@
     - [x] Tabel centang siapa makan apa + tombol Hitung
     - [x] Verifikasi contoh proposal (Pizza 85k, dst total 350k) hasilnya pas 100% — 6 item subtotal 350.000 + pajak 38.500 + service 35.000 − diskon 25.000 = 398.500; settlements berjumlah tepat 398.500 (diff 0), dicek via API E2E dan lewat UI browser
 
-- [ ] **Fase 2: Web App Aesthetic Mobile-First (Peserta View)**
-  - [ ] **Task 2.1: Halaman peserta `/s/[token]`**
-    - [ ] Card daftar menu (nama, harga, avatar pemilih live)
-    - [ ] Input nama sekali (simpan di localStorage)
-    - [ ] Tap untuk claim / unclaim item (optimistic UI)
-    - [ ] State loading skeleton + empty state + error state
-  - [ ] **Task 2.2: Halaman admin `/s/[token]/admin`**
-    - [ ] Edit pajak / service / diskon
-    - [ ] Edit info pembayaran (BCA, QRIS URL/image)
-    - [ ] Tombol `Selesai & Hitung` + konfirmasi
-  - [ ] **Task 2.3: Halaman hasil `/s/[token]/result`**
-    - [ ] Tampilkan rincian per orang + total presisi struk
-    - [ ] Tombol copy nomor rekening + buka link QRIS
-    - [ ] Optimasi mobile: button min 44px, font besar, ringan untuk in-app browser WA
-  - [ ] **Task 2.4: Validasi tanpa login**
-    - [ ] 5 user buka link sama tanpa login tanpa error RLS
-    - [ ] Token tidak mudah ditebak + expiry 7 hari (logika awal)
+- [x] **Fase 2: Web App Aesthetic Mobile-First (Peserta View)** — SELESAI 2026-09-09 (`scripts/verify-phase2.mjs` 18/18; regresi `verify-phase1-api` 15/15; Vitest 21/21; `npm run build` sukses; UI peserta/admin/hasil terverifikasi via browser preview).
+  - [x] **Task 2.1: Halaman peserta `/s/[token]`** — `app/s/[token]/page.tsx`; nama via localStorage (`useSyncExternalStore`), claim/unclaim optimistic + rollback + toast.
+    - [x] Card daftar menu (nama, harga, avatar pemilih live)
+    - [x] Input nama sekali (simpan di localStorage)
+    - [x] Tap untuk claim / unclaim item (optimistic UI)
+    - [x] State loading skeleton + empty state + error state
+  - [x] **Task 2.2: Halaman admin `/s/[token]/admin`** — komponen bersama `components/sessions/SessionAdminView.tsx` (dipakai juga `/admin/[token]`, refactor Task 1.4). Fix: PATCH sesi pindah ke service role sesuai konvensi RLS Fase 1 (sebelumnya 500 karena policy anon `sessions` hanya read). Upload QRIS: `POST /api/sessions/[token]/qris` → Storage `receipts` (png/jpg/webp ≤2MB) + simpan URL publik.
+    - [x] Edit pajak / service / diskon
+    - [x] Edit info pembayaran (BCA, QRIS URL/image)
+    - [x] Tombol `Selesai & Hitung` + konfirmasi
+  - [x] **Task 2.3: Halaman hasil `/s/[token]/result`** — rincian per orang (makanan + pajak/service − diskon), copy BCA (clipboard API + fallback), QRIS image/link, empty state draft.
+    - [x] Tampilkan rincian per orang + total presisi struk
+    - [x] Tombol copy nomor rekening + buka link QRIS
+    - [x] Optimasi mobile: button min 44px, font besar, ringan untuk in-app browser WA
+  - [x] **Task 2.4: Validasi tanpa login** — E2E `scripts/verify-phase2.mjs` 18/18 PASS.
+    - [x] 5 user buka link sama tanpa login tanpa error RLS
+    - [x] Token tidak mudah ditebak + expiry 7 hari (logika awal)
 
 - [ ] **Fase 3: Realtime Sync (Supabase Realtime)**
   - [ ] **Task 3.1: Aktifkan Realtime**
@@ -147,3 +147,4 @@
 - Urutan saran: `0 → 1 → 2 → 3 → 4 → 6 → 5 → 7`
 - Update file ini setiap selesai task: `- [ ]` → `- [x]`
 - Fase 1 selesai 2026-09-09. Cara verifikasi ulang: `npm test` (unit), `node scripts/db-push.mjs --verify-only` (skema, butuh SUPABASE_DB_URL), jalankan `npm run build && npm start` lalu `node scripts/verify-phase1-api.mjs http://localhost:3000` (E2E).
+- Fase 2 selesai 2026-09-09. Cara verifikasi ulang: `npm test` (unit), `npm run build && npm start` lalu `node scripts/verify-phase2.mjs http://localhost:3000` (E2E 5 user tanpa login) dan `node scripts/verify-phase1-api.mjs http://localhost:3000` (regresi). Catatan port: dev/start di mesin ini memakai port acak — cek output `Local:` di log lalu sesuaikan baseURL. `lib/api/types.ts` = DTO bersama UI; `components/sessions/SessionAdminView.tsx` dipakai `/admin/[token]` & `/s/[token]/admin`.
