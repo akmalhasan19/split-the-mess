@@ -1,4 +1,3 @@
-// Phase 0 verification: checks files, tsc, prettier, eslint, build artifacts.
 import { execFile } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { promisify } from "node:util";
