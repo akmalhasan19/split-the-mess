@@ -30,27 +30,28 @@
     - [ ] Cek layout di in-app browser WhatsApp (mobile, tidak pecah) — layout mobile-first siap; butuh cek manual user dari HP.
     - [x] Buat file SQL migration awal (kosong / placeholder)
 
-- [ ] **Fase 1: Core Split Engine + Session Manual**
-  - [ ] **Task 1.1: Implementasi `split-engine.ts`**
-    - [ ] Implementasi `calcProportional(items, selections, tax, service, discount)`
-    - [ ] Implementasi `smartRounding` (largest remainder agar sum == total struk)
-    - [ ] Handle edge: item tanpa pemilih, 1 item dimakan berdua, diskon > pajak
-    - [ ] Buat unit test dengan Vitest (target 15+ kasus)
-  - [ ] **Task 1.2: Skema DB inti (Supabase Postgres)**
-    - [ ] Buat tabel `sessions (id, token unique, receipt_image_url, subtotal, tax, service_charge, discount, payer_bca, payer_qris_url, status, raw_ocr_json)`
-    - [ ] Buat tabel `items (id, session_id, name, price, qty)`
-    - [ ] Buat tabel `participants (id, session_id, display_name)`
-    - [ ] Buat tabel `selections (item_id, participant_id)` many-to-many
-    - [ ] Buat tabel `settlements (session_id, participant_id, amount_subtotal, amount_tax, amount_service, amount_discount, amount_final, is_paid)`
-  - [ ] **Task 1.3: API session manual**
-    - [ ] `POST /api/sessions` — buat sesi + generate token (nanoid 8 char)
-    - [ ] `POST /api/sessions/[id]/finalize` — kalkulasi final + simpan settlements
-    - [ ] `GET /api/sessions/[token]` — ambil detail sesi untuk UI
-  - [ ] **Task 1.4: UI Admin minimal (validasi matematika)**
-    - [ ] Form buat sesi + tambah item manual (nama + harga)
-    - [ ] Form pajak / service / diskon + info pembayaran (BCA/QRIS)
-    - [ ] Tabel centang siapa makan apa + tombol Hitung
-    - [ ] Verifikasi contoh proposal (Pizza 85k, dst total 350k) hasilnya pas 100%
+- [x] **Fase 1: Core Split Engine + Session Manual** — SELESAI 2026-09-09 (Vitest 21/21; migrasi live: 5 tabel + RLS semua PASS via `scripts/db-push.mjs`; E2E API 15/15 (`scripts/verify-phase1-api.mjs` pada `next start`); UI admin terverifikasi via browser: finalize contoh proposal pas Rp398.500, diff 0).
+  - [x] **Task 1.1: Implementasi `split-engine.ts`** — `lib/split-engine/index.ts` pure functions.
+    - [x] Implementasi `calcProportional(items, selections, tax, service, discount)`
+    - [x] Implementasi `smartRounding` (largest remainder agar sum == total struk)
+    - [x] Handle edge: item tanpa pemilih, 1 item dimakan berdua, diskon > pajak
+    - [x] Buat unit test dengan Vitest (target 15+ kasus) — 21 kasus di `lib/split-engine/index.test.ts` (K1–K21)
+  - [x] **Task 1.2: Skema DB inti (Supabase Postgres)** — `supabase/migrations/0001_phase1_core_schema.sql` (idempotent) + apply live via `scripts/db-push.mjs` (SUPABASE_DB_URL). RLS: read saat sesi live, write hanya saat draft; settlement ditulis service role.
+    - [x] Buat tabel `sessions (id, token unique, receipt_image_url, subtotal, tax, service_charge, discount, payer_bca, payer_qris_url, status, raw_ocr_json)` + `expires_at` 7 hari
+    - [x] Buat tabel `items (id, session_id, name, price, qty)`
+    - [x] Buat tabel `participants (id, session_id, display_name)`
+    - [x] Buat tabel `selections (item_id, participant_id)` many-to-many
+    - [x] Buat tabel `settlements (session_id, participant_id, amount_subtotal, amount_tax, amount_service, amount_discount, amount_final, is_paid)`
+  - [x] **Task 1.3: API session manual** — helper bersama di `lib/api/sessions.ts`; finalize diimplement per-token (`/api/sessions/[token]/finalize`) agar konsisten dengan link publik.
+    - [x] `POST /api/sessions` — buat sesi + generate token (nanoid 8 char, alphabet tanpa karakter ambigu; via service role)
+    - [x] `POST /api/sessions/[token]/finalize` — kalkulasi final + simpan settlements (tolak 400 bila ada item tanpa pemilih; 409 bila finalized)
+    - [x] `GET /api/sessions/[token]` — ambil detail sesi untuk UI (items + selections + participants + settlements)
+    - [x] Tambahan: `PATCH /api/sessions/[token]` (edit pajak/service/diskon/bayar), `POST .../items`, `POST .../participants`, `PATCH .../items/[itemId]` (toggle seleksi, upsert onConflict)
+  - [x] **Task 1.4: UI Admin minimal (validasi matematika)** — `/admin` (buat sesi) + `/admin/[token]` (tabel centang, tambah item/peserta, edit pajak, Selesai & Hitung, hasil final + copy BCA).
+    - [x] Form buat sesi + tambah item manual (nama + harga)
+    - [x] Form pajak / service / diskon + info pembayaran (BCA/QRIS)
+    - [x] Tabel centang siapa makan apa + tombol Hitung
+    - [x] Verifikasi contoh proposal (Pizza 85k, dst total 350k) hasilnya pas 100% — 6 item subtotal 350.000 + pajak 38.500 + service 35.000 − diskon 25.000 = 398.500; settlements berjumlah tepat 398.500 (diff 0), dicek via API E2E dan lewat UI browser
 
 - [ ] **Fase 2: Web App Aesthetic Mobile-First (Peserta View)**
   - [ ] **Task 2.1: Halaman peserta `/s/[token]`**
@@ -145,3 +146,4 @@
 - Mulai dari: Fase 0
 - Urutan saran: `0 → 1 → 2 → 3 → 4 → 6 → 5 → 7`
 - Update file ini setiap selesai task: `- [ ]` → `- [x]`
+- Fase 1 selesai 2026-09-09. Cara verifikasi ulang: `npm test` (unit), `node scripts/db-push.mjs --verify-only` (skema, butuh SUPABASE_DB_URL), jalankan `npm run build && npm start` lalu `node scripts/verify-phase1-api.mjs http://localhost:3000` (E2E).

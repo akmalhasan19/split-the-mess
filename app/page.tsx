@@ -40,6 +40,15 @@ export default function Home() {
         </div>
       </div>
 
+      <div className="mt-6 flex flex-col gap-2">
+        <Link
+          className="flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow hover:bg-emerald-600/90"
+          href="/admin"
+        >
+          Buka Admin — Buat Sesi
+        </Link>
+      </div>
+
       <p className="mt-6 text-xs text-zinc-500">
         Status backend:{" "}
         <Link
