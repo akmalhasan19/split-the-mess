@@ -25,9 +25,9 @@
     - [x] Simpan `NEXT_PUBLIC_SUPABASE_URL` & `ANON_KEY` & `SERVICE_ROLE_KEY` ke `.env.local`
     - [x] Buat Storage bucket `receipts` (public read untuk MVP, private bila perlu) — via `GET /api/storage-check` (auto-create + roundtrip test)
     - [x] Verifikasi koneksi read/write dari Next.js ke Supabase — via `GET /api/supabase-check` & `/api/storage-check`
-  - [ ] **Task 0.3: Setup deploy & CI dasar** — repo READY; tinggal push + import ke Vercel oleh user (langkah di bawah).
-    - [ ] Deploy awal ke Vercel (preview) berhasil
-    - [ ] Cek layout di in-app browser WhatsApp (mobile, tidak pecah)
+  - [x] **Task 0.3: Setup deploy & CI dasar** — SELESAI 2026-09-09. Production `https://split-the-mess.vercel.app` live: `/` + `/api/health` + `/api/supabase-check` + `/api/storage-check` semua OK. Fix: Framework Preset Vercel `Other` → `Next.js` (build sebelumnya hijau tapi output tidak di-serve → 404 platform di semua route).
+    - [x] Deploy awal ke Vercel (preview) berhasil
+    - [ ] Cek layout di in-app browser WhatsApp (mobile, tidak pecah) — layout mobile-first siap; butuh cek manual user dari HP.
     - [x] Buat file SQL migration awal (kosong / placeholder)
 
 - [ ] **Fase 1: Core Split Engine + Session Manual**
