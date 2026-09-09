@@ -71,19 +71,19 @@
     - [x] 5 user buka link sama tanpa login tanpa error RLS
     - [x] Token tidak mudah ditebak + expiry 7 hari (logika awal)
 
-- [ ] **Fase 3: Realtime Sync (Supabase Realtime)**
-  - [ ] **Task 3.1: Aktifkan Realtime**
-    - [ ] Enable Realtime untuk `selections` & `participants`
-    - [ ] Subscribe channel `session:{token}` di client
-    - [ ] Upsert `selections` dengan `onConflict(item_id, participant_id)`
-  - [ ] **Task 3.2: UX realtime**
-    - [ ] Optimistic update + rollback saat gagal
-    - [ ] Presence siapa online (Supabase presence)
-    - [ ] Debounce / throttle update agar tidak spam
-  - [ ] **Task 3.3: RLS & keamanan link**
-    - [ ] Buat RLS policy anon read/write berbasis token sesi
-    - [ ] Validasi token di Edge Function / API route bila perlu
-    - [ ] Test: HP A centang → HP B muncul <1 detik tanpa refresh
+- [x] **Fase 3: Realtime Sync (Supabase Realtime)** — SELESAI 2026-09-09 (`scripts/verify-phase3.mjs` 13/13; regresi Fase 1 15/15; regresi Fase 2 18/18; Vitest 21/21; ESLint 0 warning; `npm run build` sukses).
+  - [x] **Task 3.1: Aktifkan Realtime**
+    - [x] Enable Realtime untuk `selections` & `participants` — migrasi `0002_phase3_realtime.sql` live di Supabase (`selections`, `participants`, `sessions` di `supabase_realtime`)
+    - [x] Subscribe channel `session:{token}` di client — `lib/hooks/use-session-realtime.ts` (dipakai di `/s/[token]` dan view admin)
+    - [x] Upsert `selections` dengan `onConflict(item_id, participant_id)` — dioptimasi pada `PATCH /api/sessions/[token]/items/[itemId]`
+  - [x] **Task 3.2: UX realtime**
+    - [x] Optimistic update + rollback saat gagal — di `/s/[token]/page.tsx` (`toggleItem` dengan pending map & toast rollback)
+    - [x] Presence siapa online (Supabase presence) — channel presence tracking `{ name }` & status indicator live
+    - [x] Debounce / throttle update agar tidak spam — throttle 120ms di `use-session-realtime.ts`
+  - [x] **Task 3.3: RLS & keamanan link**
+    - [x] Buat RLS policy anon read/write berbasis token sesi — `0001_phase1_core_schema.sql` (enforce draft & live session di database level)
+    - [x] Validasi token di Edge Function / API route bila perlu — validasi paralel di route `[itemId]` dan `requireDraftSession`
+    - [x] Test: HP A centang → HP B muncul <1 detik tanpa refresh — verified via `verify-phase3.mjs` (INSERT selections ~538 ms, DELETE ~512 ms, finalize update ~919 ms)
 
 - [ ] **Fase 4: WhatsApp Bot MVP (Baileys)**
   - [ ] **Task 4.1: Setup service `bot/`**
@@ -148,3 +148,4 @@
 - Update file ini setiap selesai task: `- [ ]` → `- [x]`
 - Fase 1 selesai 2026-09-09. Cara verifikasi ulang: `npm test` (unit), `node scripts/db-push.mjs --verify-only` (skema, butuh SUPABASE_DB_URL), jalankan `npm run build && npm start` lalu `node scripts/verify-phase1-api.mjs http://localhost:3000` (E2E).
 - Fase 2 selesai 2026-09-09. Cara verifikasi ulang: `npm test` (unit), `npm run build && npm start` lalu `node scripts/verify-phase2.mjs http://localhost:3000` (E2E 5 user tanpa login) dan `node scripts/verify-phase1-api.mjs http://localhost:3000` (regresi). Catatan port: dev/start di mesin ini memakai port acak — cek output `Local:` di log lalu sesuaikan baseURL. `lib/api/types.ts` = DTO bersama UI; `components/sessions/SessionAdminView.tsx` dipakai `/admin/[token]` & `/s/[token]/admin`.
+- Fase 3 selesai 2026-09-09. Cara verifikasi ulang: `node --env-file=.env scripts/db-push.mjs --verify-only` (skema + publication `supabase_realtime`), `npm test` (unit), `npm run build && npm start` lalu `node --env-file=.env scripts/verify-phase3.mjs http://localhost:3000` (E2E Realtime: websocket anon, claim/unclaim <1s, presence join, isolasi sesi, update saat finalize).

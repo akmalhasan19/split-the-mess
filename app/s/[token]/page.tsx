@@ -434,8 +434,8 @@ export default function ParticipantSessionPage() {
         </span>
         <h1 className="text-xl font-bold">Sesi sudah selesai dihitung</h1>
         <p className="max-w-xs text-sm text-zinc-600">
-          Pemilihan menu sudah ditutup admin. Lihat rincian tagihan per orang
-          di halaman hasil.
+          Pemilihan menu sudah ditutup admin. Lihat rincian tagihan per orang di
+          halaman hasil.
         </p>
         <Button onClick={() => router.push(`/s/${token}/result`)}>
           Lihat Hasil Split
@@ -456,8 +456,8 @@ export default function ParticipantSessionPage() {
           </p>
           <h1 className="mt-2 text-2xl font-bold">Siapa nama kamu?</h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Supaya temanmu tahu siapa yang makan apa. Nama disimpan di HP kamu
-            — nggak perlu login.
+            Supaya temanmu tahu siapa yang makan apa. Nama disimpan di HP kamu —
+            nggak perlu login.
           </p>
         </div>
         <Card>
@@ -649,8 +649,8 @@ export default function ParticipantSessionPage() {
 
       {/* Presence + status realtime (Task 3.2) */}
       <p className="text-center text-xs text-zinc-500">
-        {claimProgress}/{items.length} item sudah diklaim · {participants.length}{" "}
-        peserta
+        {claimProgress}/{items.length} item sudah diklaim ·{" "}
+        {participants.length} peserta
       </p>
       <div
         className="flex flex-wrap items-center justify-center gap-1 text-xs"

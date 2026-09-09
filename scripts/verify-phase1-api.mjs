@@ -12,7 +12,6 @@
  * - cek juga: finalize ditolak saat ada item tanpa pemilih (400),
  *   sesi finalized menolak PATCH & toggle (409), GET 404 untuk token hantu.
  */
-import { strict as assert } from "node:assert";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const results = [];

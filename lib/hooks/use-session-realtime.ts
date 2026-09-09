@@ -7,9 +7,11 @@
  * - postgres_changes INSERT/DELETE `selections` → klaim/unclaim live.
  * - postgres_changes INSERT `participants` → peserta baru gabung live.
  * - postgres_changes UPDATE `sessions` → OPSIONAL (subscribeSessionUpdates).
- *   Default mati: tabel `sessions` baru masuk publication realtime lewat
- *   migration 0002 (butuh SUPABASE_DB_URL untuk di-apply). Selama belum,
- *   halaman memakai polling ringan untuk status.
+ *   Handler WAJIB dipasang sebelum .subscribe() — supabase-js melempar
+ *   "cannot add postgres_changes callbacks after subscribe()" bila ditambah
+ *   setelahnya (bug lama yang membuat halaman crash). Bila flag false,
+ *   callback pasif (langsung return) sehingga perilaku sama seperti
+ *   tidak berlangganan.
  * - presence: daftar nama peserta yang online (Task 3.2).
  *
  * Desain:
@@ -119,9 +121,10 @@ export function useSessionRealtime({
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "selections" },
         (payload) => {
-          const row = payload.new as
-            | { item_id: string; participant_id: string }
-            | null;
+          const row = payload.new as {
+            item_id: string;
+            participant_id: string;
+          } | null;
           if (row?.item_id && row?.participant_id) {
             enqueue({
               itemId: row.item_id,
@@ -135,9 +138,10 @@ export function useSessionRealtime({
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "selections" },
         (payload) => {
-          const old = payload.old as
-            | { item_id: string; participant_id: string }
-            | null;
+          const old = payload.old as {
+            item_id: string;
+            participant_id: string;
+          } | null;
           if (old?.item_id && old?.participant_id) {
             enqueue({
               itemId: old.item_id,
@@ -154,6 +158,19 @@ export function useSessionRealtime({
           const row = payload.new as ParticipantDto | null;
           if (row?.id && row.session_id === sessionId) {
             onParticipantRef.current?.(row);
+          }
+        }
+      )
+      // UPDATE sessions: tetap dipasang sebelum subscribe (wajib oleh
+      // supabase-js); callback pasif bila flag mati.
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions" },
+        (payload) => {
+          if (!subscribeSessionUpdates) return;
+          const row = payload.new as SessionDto | null;
+          if (row?.id === sessionId) {
+            onSessionUpdateRef.current?.(row);
           }
         }
       )
@@ -179,21 +196,6 @@ export function useSessionRealtime({
           setStatus("offline");
         }
       });
-
-    // Opsional: UPDATE sessions (hanya setelah migration 0002 applied).
-    // Cleanup otomatis via removeChannel di bawah.
-    if (subscribeSessionUpdates) {
-      channel.on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "sessions" },
-        (payload) => {
-          const row = payload.new as SessionDto | null;
-          if (row?.id === sessionId) {
-            onSessionUpdateRef.current?.(row);
-          }
-        }
-      );
-    }
 
     return () => {
       if (timer) clearTimeout(timer);

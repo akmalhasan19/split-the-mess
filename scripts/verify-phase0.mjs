@@ -8,7 +8,9 @@ const results = [];
 
 function check(name, ok, detail = "") {
   results.push({ name, ok, detail });
-  console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? " — " + detail : ""}`);
+  console.log(
+    `${ok ? "PASS" : "FAIL"}  ${name}${detail ? " — " + detail : ""}`
+  );
 }
 
 const requiredFiles = [
@@ -77,7 +79,10 @@ async function run(cmd, args, timeout = 60000) {
 
 // tsc
 {
-  const r = await run(process.execPath, ["node_modules/typescript/bin/tsc", "--noEmit"]);
+  const r = await run(process.execPath, [
+    "node_modules/typescript/bin/tsc",
+    "--noEmit",
+  ]);
   check("verify:tsc", r.ok, r.ok ? "no errors" : r.out.slice(0, 400));
 }
 // prettier
@@ -97,16 +102,30 @@ async function run(cmd, args, timeout = 60000) {
 {
   const r = await run(
     process.execPath,
-    ["node_modules/eslint/bin/eslint.js", "app/api/health/route.ts", "lib/utils.ts"],
+    [
+      "node_modules/eslint/bin/eslint.js",
+      "app/api/health/route.ts",
+      "lib/utils.ts",
+    ],
     45000
   );
-  check("verify:eslint(sample)", r.ok, r.ok ? "no errors" : r.out.slice(0, 400));
+  check(
+    "verify:eslint(sample)",
+    r.ok,
+    r.ok ? "no errors" : r.out.slice(0, 400)
+  );
 }
 // build artifact
-check("verify:build-artifact", existsSync(`${root}/.next/BUILD_ID`), ".next/BUILD_ID ada = build sukses");
+check(
+  "verify:build-artifact",
+  existsSync(`${root}/.next/BUILD_ID`),
+  ".next/BUILD_ID ada = build sukses"
+);
 
 const failed = results.filter((r) => !r.ok);
-console.log(`\n${results.length - failed.length}/${results.length} checks passed.`);
+console.log(
+  `\n${results.length - failed.length}/${results.length} checks passed.`
+);
 if (failed.length) {
   console.log("Failed:", failed.map((f) => f.name).join(", "));
   process.exit(1);

@@ -129,7 +129,8 @@ async function main() {
       "postgres_changes",
       { event: "UPDATE", schema: "public", table: "sessions" },
       (payload) => {
-        if (payload.new?.id === sessionId) events.sessUpdate = performance.now();
+        if (payload.new?.id === sessionId)
+          events.sessUpdate = performance.now();
       }
     )
     .on("presence", { event: "join" }, () => {
@@ -185,9 +186,7 @@ async function main() {
   check(
     "HP A menerima INSERT participants live",
     waitPart.ok,
-    waitPart.ok
-      ? `${(events.partInsert - tJoin0).toFixed(0)} ms`
-      : "timeout 5s"
+    waitPart.ok ? `${(events.partInsert - tJoin0).toFixed(0)} ms` : "timeout 5s"
   );
 
   // 2) Claim item 0 → INSERT selections → HP A < 1000 ms.
@@ -279,14 +278,11 @@ async function main() {
     body: JSON.stringify({ items: [{ name: "Item Sesi Lain", price: 9000 }] }),
   });
   const otherToken = other.json?.token;
-  const otherJoined = await api(
-    `/api/sessions/${otherToken}/participants`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ displayName: "CrossUser" }),
-    }
-  );
+  const otherJoined = await api(`/api/sessions/${otherToken}/participants`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ displayName: "CrossUser" }),
+  });
   const otherPartId = otherJoined.json?.id;
   const before = events.selInsert ?? 0;
   await api(`/api/sessions/${otherToken}/items/${other.json.items[0].id}`, {
@@ -299,9 +295,7 @@ async function main() {
   // tanpa filter item), tapi handler HP A hanya memproses sesi sendiri —
   // verifikasi di sini: state yang dibaca via API sesi pertama tidak berubah.
   const detailAfter = await api(`/api/sessions/${token}`);
-  const item0 = detailAfter.json?.items?.find(
-    (i) => i.id === itemRows[0].id
-  );
+  const item0 = detailAfter.json?.items?.find((i) => i.id === itemRows[0].id);
   check(
     "Isolasi: klaim sesi lain tidak mengubah sesi ini",
     item0 && item0.selections.length === 0,
@@ -341,21 +335,20 @@ async function main() {
   }
 
   // 7) RLS tetap: toggle setelah finalized → 409.
-  const afterFin = await api(
-    `/api/sessions/${token}/items/${itemRows[0].id}`,
-    {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ participantId, selected: false }),
-    }
-  );
+  const afterFin = await api(`/api/sessions/${token}/items/${itemRows[0].id}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ participantId, selected: false }),
+  });
   check("RLS: toggle setelah finalized → 409", afterFin.status === 409);
 
   // ---------- Cleanup ----------
   await hpA.removeChannel(channelA);
   await hpB.removeChannel(channelB);
 
-  console.log(`\nSelesai: ${pass} pass, ${fail} fail ${fail === 0 ? "✔" : "✘"}`);
+  console.log(
+    `\nSelesai: ${pass} pass, ${fail} fail ${fail === 0 ? "✔" : "✘"}`
+  );
   process.exit(fail === 0 ? 0 : 1);
 }
 

@@ -11,7 +11,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  FinalizedSessionError,
   mapApiError,
   requireDraftSession,
   type SelectionRow,
@@ -24,8 +23,6 @@ export async function PATCH(
 ) {
   const { token, itemId } = await params;
   try {
-    const session = await requireDraftSession(token);
-
     let body: unknown;
     try {
       body = await request.json();
@@ -52,28 +49,28 @@ export async function PATCH(
 
     const supabase = await createClient();
 
-    // Validasi silang: item & peserta memang milik sesi ini.
-    const [{ data: item }, { data: participant }] = await Promise.all([
+    // Validasi silang secara paralel: sesi harus draft, item & peserta milik sesi ini.
+    const [session, { data: item }, { data: participant }] = await Promise.all([
+      requireDraftSession(token),
       supabase
         .from("items")
         .select("id, session_id")
         .eq("id", itemId)
-        .eq("session_id", session.id)
         .maybeSingle(),
       supabase
         .from("participants")
         .select("id, session_id")
         .eq("id", participantId)
-        .eq("session_id", session.id)
         .maybeSingle(),
     ]);
-    if (!item) {
+
+    if (!item || item.session_id !== session.id) {
       return NextResponse.json(
         { error: "Item tidak ditemukan." },
         { status: 404 }
       );
     }
-    if (!participant) {
+    if (!participant || participant.session_id !== session.id) {
       return NextResponse.json(
         { error: "Peserta tidak ditemukan." },
         { status: 404 }
@@ -95,17 +92,6 @@ export async function PATCH(
         .eq("item_id", itemId)
         .eq("participant_id", participantId);
       if (error) throw error;
-    }
-
-    // Cek status sesi sekali lagi — finalize bisa saja terjadi di antara
-    // validasi dan tulis; beri 409 agar UI rollback optimistic.
-    const after = await supabase
-      .from("sessions")
-      .select("status")
-      .eq("id", session.id)
-      .maybeSingle();
-    if ((after.data?.status ?? "draft") !== "draft") {
-      throw new FinalizedSessionError();
     }
 
     const { data: current } = await supabase

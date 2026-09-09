@@ -111,7 +111,10 @@ export default function SessionAdminView({
               if (it.id !== ev.itemId) return it;
               const has = it.selections.includes(ev.participantId);
               if (ev.added && !has) {
-                return { ...it, selections: [...it.selections, ev.participantId] };
+                return {
+                  ...it,
+                  selections: [...it.selections, ev.participantId],
+                };
               }
               if (!ev.added && has) {
                 return {
@@ -137,9 +140,7 @@ export default function SessionAdminView({
 
   const applySessionUpdate = useCallback((s: SessionDto) => {
     setDetail((prev) =>
-      !prev || prev.session.id !== s.id
-        ? prev
-        : { ...prev, session: s }
+      !prev || prev.session.id !== s.id ? prev : { ...prev, session: s }
     );
   }, []);
 
@@ -339,7 +340,10 @@ export default function SessionAdminView({
               <tbody>
                 {items.length === 0 && (
                   <tr>
-                    <td className="py-4 text-zinc-500" colSpan={2 + participants.length}>
+                    <td
+                      className="py-4 text-zinc-500"
+                      colSpan={2 + participants.length}
+                    >
                       Belum ada item.
                     </td>
                   </tr>
@@ -367,7 +371,9 @@ export default function SessionAdminView({
                             className="size-5 accent-emerald-600 disabled:opacity-40"
                             disabled={!isDraft || busy}
                             type="checkbox"
-                            onChange={() => void toggle(item.id, p.id, !checked)}
+                            onChange={() =>
+                              void toggle(item.id, p.id, !checked)
+                            }
                           />
                         </td>
                       );
@@ -655,7 +661,11 @@ export default function SessionAdminView({
                       )}
                     </strong>
                   </li>
-                  <li className={cn("flex justify-between border-t border-zinc-100 pt-1")}>
+                  <li
+                    className={cn(
+                      "flex justify-between border-t border-zinc-100 pt-1"
+                    )}
+                  >
                     <span>Total</span>
                     <strong>
                       {formatRupiah(

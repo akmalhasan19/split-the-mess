@@ -126,12 +126,20 @@ export function mapApiError(error: unknown): {
     "Internal error";
   const code = typeof asRecord?.code === "string" ? asRecord.code : undefined;
 
-  // 23505 = unique violation; 42501 = RLS violation (seharusnya tidak terjadi
-  // dari kode server — log untuk debug).
+  // 23505 = unique violation; 42501 = RLS violation (mis. sesi finalized saat tulis).
   if (code === "23505") {
     return { status: 409, body: { error: "Data duplikat." } };
   }
-  if (message === "Internal error" || (code && code !== "23505")) {
+  if (code === "42501") {
+    return {
+      status: 409,
+      body: { error: "Sesi sudah finalized atau tidak valid." },
+    };
+  }
+  if (
+    message === "Internal error" ||
+    (code && code !== "23505" && code !== "42501")
+  ) {
     console.error("[api] unexpected db error:", error);
   }
   return { status: 500, body: { error: message } };
@@ -259,16 +267,14 @@ export async function finalizeSession(token: string): Promise<FinalizeResult> {
     is_paid: false,
   }));
 
-  const { error } = await admin
-    .from("settlements")
-    .upsert(rows, { onConflict: "session_id,participant_id" });
-  if (error) throw error;
-
-  const { error: statusError } = await admin
-    .from("sessions")
-    .update({ status: "finalized" })
-    .eq("id", session.id);
-  if (statusError) throw statusError;
+  const [settleRes, statusRes] = await Promise.all([
+    admin
+      .from("settlements")
+      .upsert(rows, { onConflict: "session_id,participant_id" }),
+    admin.from("sessions").update({ status: "finalized" }).eq("id", session.id),
+  ]);
+  if (settleRes.error) throw settleRes.error;
+  if (statusRes.error) throw statusRes.error;
 
   return {
     sessionId: session.id,

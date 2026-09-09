@@ -11,7 +11,5 @@ import { useParams } from "next/navigation";
 
 export default function AdminSessionPage() {
   const params = useParams<{ token: string }>();
-  return (
-    <SessionAdminView backHref="/admin" token={params.token} />
-  );
+  return <SessionAdminView backHref="/admin" token={params.token} />;
 }

@@ -277,3 +277,36 @@ Error: Route "/s/[token]/admin" used `params.token`. `params` is a Promise and m
   187 |         "postgres_changes",
   188 |         { event: "UPDATE", schema: "public", table: "sessions" },
   189 |         (payload) => {
+ GET /s/fbczf2g2 200 in 85ms (next.js: 26ms, application-code: 59ms)
+ GET /api/sessions/fbczf2g2 200 in 1454ms (next.js: 4ms, application-code: 1449ms)
+ GET /api/sessions/fbczf2g2 200 in 1507ms (next.js: 24ms, application-code: 1483ms)
+[browser] Uncaught Error: cannot add `postgres_changes` callbacks for realtime:session:fbczf2g2 after `subscribe()`.
+    at useSessionRealtime.useEffect (lib/hooks/use-session-realtime.ts:186:15)
+  184 |     // Cleanup otomatis via removeChannel di bawah.
+  185 |     if (subscribeSessionUpdates) {
+> 186 |       channel.on(
+      |               ^
+  187 |         "postgres_changes",
+  188 |         { event: "UPDATE", schema: "public", table: "sessions" },
+  189 |         (payload) => {
+ GET /s/fbczf2g2 200 in 96ms (next.js: 22ms, application-code: 74ms)
+ GET /api/sessions/fbczf2g2 200 in 361ms (next.js: 17ms, application-code: 344ms)
+ GET /api/sessions/fbczf2g2 200 in 392ms (next.js: 5ms, application-code: 387ms)
+[browser] Uncaught Error: cannot add `postgres_changes` callbacks for realtime:session:fbczf2g2 after `subscribe()`.
+    at useSessionRealtime.useEffect (lib/hooks/use-session-realtime.ts:186:15)
+  184 |     // Cleanup otomatis via removeChannel di bawah.
+  185 |     if (subscribeSessionUpdates) {
+> 186 |       channel.on(
+      |               ^
+  187 |         "postgres_changes",
+  188 |         { event: "UPDATE", schema: "public", table: "sessions" },
+  189 |         (payload) => {
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+✓ Compiled in 72ms
+ GET /s/fbczf2g2 200 in 55ms (next.js: 20ms, application-code: 34ms)
+ GET /api/sessions/fbczf2g2 200 in 1452ms (next.js: 14ms, application-code: 1438ms)
+ GET /api/sessions/fbczf2g2 200 in 1440ms (next.js: 4ms, application-code: 1437ms)
+ GET /s/fbczf2g2 200 in 84ms (next.js: 24ms, application-code: 61ms)
+ GET /api/sessions/fbczf2g2 200 in 968ms (next.js: 20ms, application-code: 948ms)
+ GET /api/sessions/fbczf2g2 200 in 1124ms (next.js: 4ms, application-code: 1119ms)
+[?25h

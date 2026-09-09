@@ -151,8 +151,8 @@ export default function SessionResultPage() {
         </p>
         <h1 className="mt-1 text-2xl font-bold">Tagihan kamu 🧾</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Sesi {session.token} · {items.length} item ·{" "}
-          {participants.length} peserta
+          Sesi {session.token} · {items.length} item · {participants.length}{" "}
+          peserta
         </p>
       </header>
 
@@ -176,8 +176,8 @@ export default function SessionResultPage() {
                     {formatRupiah(s.amount_final)}
                   </span>
                   <span className="text-xs text-zinc-500">
-                    makanan {formatRupiah(s.amount_subtotal)} · pajak &{" "}
-                    service {formatRupiah(s.amount_tax + s.amount_service)}
+                    makanan {formatRupiah(s.amount_subtotal)} · pajak & service{" "}
+                    {formatRupiah(s.amount_tax + s.amount_service)}
                     {s.amount_discount > 0 &&
                       ` · diskon −${formatRupiah(s.amount_discount)}`}
                   </span>
@@ -189,10 +189,7 @@ export default function SessionResultPage() {
             <span className="text-sm font-semibold text-zinc-600">
               TOTAL (presisi struk)
             </span>
-            <strong
-              className="text-xl font-bold"
-              data-testid="grand-total"
-            >
+            <strong className="text-xl font-bold" data-testid="grand-total">
               {formatRupiah(grandTotal)}
             </strong>
           </div>
@@ -215,9 +212,7 @@ export default function SessionResultPage() {
       {/* Info pembayaran (Task 2.3) */}
       <Card>
         <CardContent className="flex flex-col gap-3 pt-4">
-          <h2 className="text-sm font-semibold text-zinc-700">
-            Cara bayar 💳
-          </h2>
+          <h2 className="text-sm font-semibold text-zinc-700">Cara bayar 💳</h2>
           {session.payer_bca && (
             <div className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3">
               <p className="text-sm break-all">{session.payer_bca}</p>
@@ -272,7 +267,10 @@ export default function SessionResultPage() {
         </CardContent>
       </Card>
 
-      <footer className="mt-auto pt-2 text-center text-xs text-zinc-400">        Dibagi proporsional sesuai yang masing-masing makan. Terima kasih sudah patungan! 🙌
+      <footer className="mt-auto pt-2 text-center text-xs text-zinc-400">
+        {" "}
+        Dibagi proporsional sesuai yang masing-masing makan. Terima kasih sudah
+        patungan! 🙌
       </footer>
     </main>
   );

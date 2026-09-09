@@ -65,11 +65,14 @@ channel
       console.log("join status:", p.status);
       await new Promise((r) => setTimeout(r, 3000));
 
-      const c = await api(`/api/sessions/${token}/items/${created.json.items[0].id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ participantId: p.json.id, selected: true }),
-      });
+      const c = await api(
+        `/api/sessions/${token}/items/${created.json.items[0].id}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ participantId: p.json.id, selected: true }),
+        }
+      );
       console.log("claim status:", c.status);
       await new Promise((r) => setTimeout(r, 3000));
 
